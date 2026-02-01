@@ -48,7 +48,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	logger.Info("Starting server", slog.String("hosted_at", "https://localhost"+srv.Addr))
+	logger.Info("Starting server", slog.String("hosted_at", "http://localhost"+srv.Addr))
 
 	err := srv.ListenAndServe()
 	logger.Error(err.Error())
