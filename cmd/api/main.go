@@ -94,7 +94,7 @@ func openDB(config config) (*sql.DB, error) {
 	db.SetMaxOpenConns(config.db.maxOpenConns)
 	db.SetMaxIdleConns(config.db.maxIdleConns)
 
-	// create a context
+	// create a contex
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	defer cancel()
