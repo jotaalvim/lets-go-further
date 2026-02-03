@@ -24,7 +24,6 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// The problem with decoding directly into a Movie struct is that a client could provide the keys id and version in their JSON request, and the corresponding values would be decoded without any error into the ID and Version fields of the Movie struct
-
 	movie := data.Movie{
 		Title:   input.Title,
 		Year:    input.Year,
@@ -66,7 +65,6 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	//var movie data.Movie
-
 	movie, err := app.models.Movies.Get(id)
 	if err != nil {
 		switch {
@@ -78,18 +76,71 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	//movie := data.Movie{
-	//	ID:        id,
-	//	CreatedAt: time.Now(),
-	//	Title:     "titulo",
-	//	//Year:      2025, // will be set to 0
-	//	Runtime: 102,
-	//	Genres:  []string{"drama", "terror"},
-	//	Version: 1,
-	//}
-
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	//get movie with a certain id
+	movie, err := app.models.Movies.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	var input struct {
+		Title   string       `json:"title"`
+		Year    int          `json:"year"`
+		Runtime data.Runtime `json:"runtime"`
+		Genres  []string     `json:"genres"`
+	}
+
+	// decode from json
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// subtitute values
+	movie.Title = input.Title
+	movie.Year = input.Year
+	movie.Runtime = input.Runtime
+	movie.Genres = input.Genres
+
+	v := validator.New()
+
+	data.ValidateMovie(v, movie)
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// update on the database
+	err = app.models.Movies.Update(movie)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
+	// senthem in json
+	err = app.writeJSON(w, http.StatusCreated, envelope{"movie": movie}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+
 }
