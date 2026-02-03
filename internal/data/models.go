@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("edit conflit")
 )
 
 // this struct is so that in future it's easier to add new models types to the app
