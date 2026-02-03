@@ -13,14 +13,15 @@ func (app *application) routes() http.Handler {
 	// custom error 404 handler
 	router.NotFound = http.HandlerFunc(app.notFoundResponse)
 
-	//custom 405 error handler , e.g. PUT /v1/healthcheck
+	// custom 405 error handler , e.g. PUT /v1/healthcheck
 	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheck)
+
+	router.HandlerFunc(http.MethodGet, "/v1/movies", app.listMoviesHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/movies", app.createMovieHandler)
 	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.showMovieHandler)
 	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", app.updateMovieHandler)
-
 	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.deleteMovieHandler)
 	//wrap the router with panic recovery
 	return app.recoverPanic(router)

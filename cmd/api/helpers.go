@@ -4,13 +4,53 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"greenlight/internal/validator"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
+
+// FIXME why do this helper methods are bduilt on app?
+
+// readString reads a string from a querystring
+func (app *application) readString(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	return s
+}
+
+// readInt read a int from a querystring, records potential errors in a validator
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "key must be integer")
+		return defaultValue
+	}
+
+	return i
+}
+
+// readCSV reads a csv from a query string and splits it over a comma
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+
+}
 
 func (app *application) readIDParam(r *http.Request) (int, error) {
 
@@ -32,13 +72,11 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 
 	//func Marshal( v any) ([] byte,error)
 	js, err := json.MarshalIndent(data, "", "\t")
-
 	if err != nil {
 		return err
 	}
 
 	js = append(js, '\n')
-
 	//type Header map[string][]string
 	for key, values := range headers {
 		for _, value := range values {
@@ -49,7 +87,6 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(js)
-
 	return nil
 }
 
