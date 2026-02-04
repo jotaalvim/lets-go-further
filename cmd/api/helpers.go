@@ -69,7 +69,6 @@ type envelope map[string]any
 
 // converts a struct envelope to json and sent it to the client
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
-
 	//func Marshal( v any) ([] byte,error)
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
