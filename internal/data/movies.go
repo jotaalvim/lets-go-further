@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"greenlight/internal/validator"
@@ -21,6 +22,10 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitzero,string"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int       `json:"version"`
+}
+
+type MovieModel struct {
+	DB *sql.DB
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
@@ -41,10 +46,6 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	v.Check(validator.UniqueValues(movie.Genres), "genres", "must not contain duplicate values")
 
-}
-
-type MovieModel struct {
-	DB *sql.DB
 }
 
 func (m MovieModel) Insert(movie *Movie) error {
@@ -167,12 +168,12 @@ func (m MovieModel) Delete(id int) error {
 }
 
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-	query := `
+	query := fmt.Sprintf(`
 		SELECT id, created_at,title, year, runtime, genres, version 
 		FROM movies
-		WHERE (LOWER(title) = LOWER($1) OR $1 = '')
+		WHERE ( to_tsvector('english', title) @@ plainto_tsquery('english', $1) OR $1 = '')
 		AND   ( genres @> $2 OR $2 = '{}')
-		ORDER BY id`
+		ORDER BY %s %s , id ASC`, filters.sortCollumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
