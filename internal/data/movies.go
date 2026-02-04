@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"greenlight/internal/validator"
@@ -21,6 +22,10 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitzero,string"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int       `json:"version"`
+}
+
+type MovieModel struct {
+	DB *sql.DB
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
@@ -41,10 +46,6 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	v.Check(validator.UniqueValues(movie.Genres), "genres", "must not contain duplicate values")
 
-}
-
-type MovieModel struct {
-	DB *sql.DB
 }
 
 func (m MovieModel) Insert(movie *Movie) error {
@@ -164,4 +165,55 @@ func (m MovieModel) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
+	query := fmt.Sprintf(`
+		SELECT count(*) OVER(), id, created_at,title, year, runtime, genres, version 
+		FROM movies
+		WHERE ( to_tsvector('english', title) @@ plainto_tsquery('english', $1) OR $1 = '')
+		AND   ( genres @> $2 OR $2 = '{}')
+		ORDER BY %s %s , id ASC
+		LIMIT $3 OFFSET $4`, filters.sortCollumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{title, pq.Array(genres), filters.limit(), filters.offset()}
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, Metadata{}, err
+
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	movies := []*Movie{}
+	for rows.Next() {
+
+		var movie Movie
+		err := rows.Scan(
+			&totalRecords,
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+		movies = append(movies, &movie)
+	}
+	if rows.Err() != nil {
+		return nil, Metadata{}, err
+	}
+
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+	return movies, metadata, nil
+
 }
