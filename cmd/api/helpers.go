@@ -16,6 +16,7 @@ import (
 
 // background helper acepts any function as a parameter
 func (app *application) background(fn func()) {
+	// Uses the GO method to launch a gorountine
 	app.wg.Go(func() {
 		defer func() {
 			// use this function to catch any panic
