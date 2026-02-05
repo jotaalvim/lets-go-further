@@ -16,8 +16,7 @@ import (
 
 // background helper acepts any function as a parameter
 func (app *application) background(fn func()) {
-
-	go func() {
+	app.wg.Go(func() {
 		defer func() {
 			// use this function to catch any panic
 			pv := recover()
@@ -26,8 +25,7 @@ func (app *application) background(fn func()) {
 			}
 		}()
 		fn()
-	}()
-
+	})
 }
 
 // readString reads a string from a querystring
