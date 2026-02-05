@@ -68,7 +68,7 @@ func (m MovieModel) Get(id int) (*Movie, error) {
 	}
 
 	query := `
-		SELECT id, created_at,title, year, runtime, genres, version 
+		SELECT id, created_at, title, year, runtime, genres, version 
 		FROM movies
 		WHERE id = $1`
 
