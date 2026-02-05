@@ -14,7 +14,19 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// FIXME why do this helper methods are bduilt on app?
+// background helper acepts any function as a parameter
+func (app *application) background(fn func()) {
+	app.wg.Go(func() {
+		defer func() {
+			// use this function to catch any panic
+			pv := recover()
+			if pv != nil {
+				app.logger.Error(fmt.Sprintf("%v", pv))
+			}
+		}()
+		fn()
+	})
+}
 
 // readString reads a string from a querystring
 func (app *application) readString(qs url.Values, key string, defaultValue string) string {

@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
-	"greenlight/internal/data" //Postgrees go driver
+	"greenlight/internal/data"   //Postgrees go driver
+	"greenlight/internal/mailer" //Postgrees go driver
 
 	_ "github.com/lib/pq"
 )
@@ -27,12 +29,22 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  time.Duration
 	}
+
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models
+	mailer *mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -53,6 +65,12 @@ func main() {
 	flag.IntVar(&config.db.maxIdleConns, "db-max-idle-conns", 25, "Postgres max amount of connection idle")
 	flag.DurationVar(&config.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "Postgres max connection idle time")
 
+	flag.StringVar(&config.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&config.smtp.port, "smtp-port", 2525, "SMTP posrt")
+	flag.StringVar(&config.smtp.username, "smtp-username", "b2d6588c9ee528", "SMTP username")
+	flag.StringVar(&config.smtp.password, "smtp-password", "1ce6d8c9fdee78", "SMTP password")
+	flag.StringVar(&config.smtp.sender, "smtp-sender", "Magic Elves <ola@example.com>", "SMTP sender")
+
 	flag.Parse()
 
 	db, err := openDB(config)
@@ -62,10 +80,17 @@ func main() {
 	}
 	defer db.Close()
 
+	mailer, err := mailer.New(config.smtp.host, config.smtp.port, config.smtp.username, config.smtp.password, config.smtp.sender)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
 	app := &application{
 		config: config,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer,
 	}
 
 	srv := &http.Server{
