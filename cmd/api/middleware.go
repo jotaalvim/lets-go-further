@@ -28,6 +28,9 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 }
 
 func (app *application) rateLimit(next http.Handler) http.Handler {
+	if !app.config.limiter.enable {
+		return next
+	}
 
 	type client struct {
 		limiter  *rate.Limiter
@@ -63,7 +66,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 		_, found := clients[ip]
 		if !found {
 			// 2 request per second, burst of 4 requests
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+			clients[ip] = &client{limiter: rate.NewLimiter(rate.Limit(app.config.limiter.rps), app.config.limiter.burst)}
 		}
 
 		clients[ip].lastSeen = time.Now()

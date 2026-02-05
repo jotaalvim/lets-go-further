@@ -30,6 +30,12 @@ type config struct {
 		maxIdleTime  time.Duration
 	}
 
+	limiter struct {
+		rps    float64
+		burst  int
+		enable bool
+	}
+
 	smtp struct {
 		host     string
 		port     int
@@ -70,6 +76,10 @@ func main() {
 	flag.StringVar(&config.smtp.username, "smtp-username", "b2d6588c9ee528", "SMTP username")
 	flag.StringVar(&config.smtp.password, "smtp-password", "1ce6d8c9fdee78", "SMTP password")
 	flag.StringVar(&config.smtp.sender, "smtp-sender", "Magic Elves <ola@example.com>", "SMTP sender")
+
+	flag.IntVar(&config.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
+	flag.BoolVar(&config.limiter.enable, "limiter-enable", true, "Enable rate limiter")
+	flag.Float64Var(&config.limiter.rps, "limiter-rps", 2, "rate limiter requests per second")
 
 	flag.Parse()
 
