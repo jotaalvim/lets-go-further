@@ -92,10 +92,9 @@ func (m *Mailer) Send(recipient string, templateFile string, data any) error {
 
 	// opens a connection SMTP server, sends message, closes connection
 	for i := 1; i <= 3; i++ {
-
 		err = m.client.DialAndSend(msg)
-		if err != nil {
-			return err
+		if err == nil {
+			return nil
 		}
 
 		if i != 3 {
