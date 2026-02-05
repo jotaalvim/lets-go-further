@@ -27,5 +27,5 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
 
 	//wrap the router with panic recovery
-	return app.recoverPanic(router)
+	return app.recoverPanic(app.rateLimit(router))
 }
