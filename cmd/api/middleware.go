@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 )
 
@@ -26,17 +29,53 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 
 func (app *application) rateLimit(next http.Handler) http.Handler {
 
-	// 2 request per second,
-	// burst of 4 requests
-	limiter := rate.NewLimiter(2, 4)
+	type client struct {
+		limiter  *rate.Limiter
+		lastSeen time.Time
+	}
+
+	var (
+		mu      sync.Mutex
+		clients = make(map[string]*client)
+	)
+
+	// launch a background dorotine which removes old entries from the clients map onc every minute
+	go func() {
+		for { // while true
+			time.Sleep(time.Minute)
+			mu.Lock()
+			for ip, client := range clients {
+				if time.Since(client.lastSeen) > 3*time.Minute {
+					delete(clients, ip)
+				}
+			}
+			mu.Unlock()
+		}
+
+	}()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		ip := realip.RealIP(r)
+
+		mu.Lock()
+
+		_, found := clients[ip]
+		if !found {
+			// 2 request per second, burst of 4 requests
+			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)}
+		}
+
+		clients[ip].lastSeen = time.Now()
+
 		// when we call Allow, 1 token will be consumed
-		if !limiter.Allow() {
+		if !clients[ip].limiter.Allow() {
+			mu.Unlock()
 			app.rateLimitExceedResponse(w, r)
 			return
 		}
-		/// codigo
+
+		mu.Unlock()
 		next.ServeHTTP(w, r)
 	})
 }
