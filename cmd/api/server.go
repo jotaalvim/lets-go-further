@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -21,6 +23,8 @@ func (app *application) serve() error {
 		WriteTimeout: 10 * time.Second,
 	}
 
+	shutdownError := make(chan error)
+
 	// start a background goroutine
 	go func() {
 		quit := make(chan os.Signal, 1)
@@ -31,12 +35,30 @@ func (app *application) serve() error {
 		// blocks until it's possible to read a sigal from the channel
 		s := <-quit
 
-		app.logger.Info("caught signal", "signal", s)
+		app.logger.Info("shutingdown server", "signal", s.String())
 		// exits sucessfuly
-		os.Exit(0)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		shutdownError <- srv.Shutdown(ctx)
 	}()
 
 	app.logger.Info("Starting server", slog.String("hosted_at", "http://localhost"+srv.Addr))
 
-	return srv.ListenAndServe()
+	// calling Shutdown will immidatly return an err on Listen and Server()
+	err := srv.ListenAndServe() //blocks
+
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	// er wait to receive a shutdown error from its channel
+	err = <-shutdownError
+	if err != nil {
+		return err
+	}
+
+	app.logger.Info("Stopped server", "addr", srv.Addr)
+
+	return nil
 }
