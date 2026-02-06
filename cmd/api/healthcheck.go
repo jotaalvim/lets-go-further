@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"time"
 )
 
 func (app *application) healthCheck(w http.ResponseWriter, r *http.Request) {

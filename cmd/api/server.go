@@ -40,7 +40,19 @@ func (app *application) serve() error {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		shutdownError <- srv.Shutdown(ctx)
+		//we only send it to shutdown channel if it returns an error
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		app.logger.Info("completing background tasks", "addr", srv.Addr)
+
+		//wait until the WaitGroup counter is zero
+		app.wg.Wait()
+
+		shutdownError <- nil
+
 	}()
 
 	app.logger.Info("Starting server", slog.String("hosted_at", "http://localhost"+srv.Addr))
