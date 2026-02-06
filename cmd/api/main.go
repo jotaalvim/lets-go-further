@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -89,6 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	logger.Info("database conection established")
 
 	mailer, err := mailer.New(config.smtp.host, config.smtp.port, config.smtp.username, config.smtp.password, config.smtp.sender)
 	if err != nil {
@@ -103,19 +102,7 @@ func main() {
 		mailer: mailer,
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.config.port),
-		Handler:      app.routes(),
-		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		IdleTimeout:  1 * time.Minute,
-		ReadTimeout:  2 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	logger.Info("database conection established")
-	logger.Info("Starting server", slog.String("hosted_at", "http://localhost"+srv.Addr))
-
-	err = srv.ListenAndServe()
+	err = app.serve()
 	logger.Error(err.Error())
 	os.Exit(1)
 
