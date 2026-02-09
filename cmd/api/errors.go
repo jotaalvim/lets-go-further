@@ -26,13 +26,20 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
+func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	// we are using an WWW-Authenticate header to remind the user to authenticate a bearer token
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "invalid or missing authentication token"
+	app.errorResponse(w, r, http.StatusBadRequest, message)
+}
+
 // This will be used to send a 400 BAD request
 func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
 // This will be used to send a 401 Invalid Credentials
-func (app *application) invalidCredentialResponse(w http.ResponseWriter, r *http.Request, err error) {
+func (app *application) invalidCredentialResponse(w http.ResponseWriter, r *http.Request) {
 	message := "invalid authentication credentials"
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
 }

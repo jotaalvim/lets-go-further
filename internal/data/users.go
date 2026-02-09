@@ -30,10 +30,15 @@ type password struct {
 
 var (
 	ErrDuplicateEmail = errors.New("duplicated email")
+	AnonymousUser     = &User{}
 )
 
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 func (m *UserModel) GetByEmail(email string) (*User, error) {

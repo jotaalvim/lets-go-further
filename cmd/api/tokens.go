@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Authorization is a request header, not a response header, as so we'll send back to the clienct, the token via body
 // createAuthenticationTokenHandler receives a password and return a new freshly created token
 func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -39,7 +40,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.invalidCredentialResponse(w, r, err)
+			app.invalidCredentialResponse(w, r)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
@@ -53,7 +54,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 	}
 
 	if !match {
-		app.invalidCredentialResponse(w, r, err)
+		app.invalidCredentialResponse(w, r)
 		return
 	}
 
