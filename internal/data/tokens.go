@@ -29,6 +29,7 @@ type Token struct {
 	Scope     string
 }
 
+// New generates a token and inserts into tokens database table
 func (m *TokenModel) New(userID int, ttl time.Duration, scope string) (*Token, error) {
 
 	token := generateToken(userID, ttl, scope)
@@ -56,7 +57,7 @@ func (m *TokenModel) Insert(token *Token) error {
 // DeleteAllForUser deletes all tokens of a specific scope for a use
 func (m *TokenModel) DeleteAllForUser(scope string, userID int) error {
 	query := `DELETE FROM tokens
-	          WHERE user_id = $1 AND scope = $2`
+	          WHERE user_id = $2 AND scope = $1`
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -64,6 +65,7 @@ func (m *TokenModel) DeleteAllForUser(scope string, userID int) error {
 	return err
 }
 
+// generateToken creates a random token
 func generateToken(userID int, ttl time.Duration, scope string) *Token {
 	token := &Token{
 		Plaintext: rand.Text(),
