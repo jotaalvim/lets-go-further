@@ -44,6 +44,18 @@ func (app *application) invalidCredentialResponse(w http.ResponseWriter, r *http
 	app.errorResponse(w, r, http.StatusUnauthorized, message)
 }
 
+// This will be used to send a 401 must be authenticated
+func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you mus be authenticated to acess this resource"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// This will be used to send a 403  Forbiden
+func (app *application) incativeAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you r account must be activated"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+
 // This will be used to send a 404 Not found Status
 func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
 
@@ -58,7 +70,7 @@ func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.
 }
 
 // This will be used to send a 409 Conflict
-func (app *application) editconflitReponse(w http.ResponseWriter, r *http.Request) {
+func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
 	message := "unable to update the record dut to an edit conflit, please try again"
 	app.errorResponse(w, r, http.StatusConflict, message)
 }

@@ -104,11 +104,10 @@ func (m MovieModel) Get(id int) (*Movie, error) {
 
 func (m MovieModel) Update(movie *Movie) error {
 	// use uuid_generate_v4() so that the version is't guessable
-	query := `
-		UPDATE movies
-		SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-		WHERE id = $5 AND version = $6
-		RETURNING version `
+	query := `UPDATE movies
+	          SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+	          WHERE id = $5 AND version = $6
+	          RETURNING version `
 
 	args := []any{
 		movie.Title,
@@ -121,6 +120,7 @@ func (m MovieModel) Update(movie *Movie) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
 	// check if no mathcing rows have been found, the version has changed
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 	if err != nil {
