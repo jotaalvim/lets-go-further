@@ -38,7 +38,7 @@ type UserModel struct {
 
 func (m *UserModel) GetByEmail(email string) (*User, error) {
 
-	query := `SELECT id, created_at,name, email, password_hash, activated,version
+	query := `SELECT id, created_at, name, email, password_hash, activated,version
 			  FROM users
 			  WHERE email = $1`
 
@@ -51,6 +51,7 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	err := m.DB.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.CreatedAt,
+		&user.Name,
 		&user.Email,
 		&user.Password.hash,
 		&user.Ativated,

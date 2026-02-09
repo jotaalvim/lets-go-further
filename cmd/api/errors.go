@@ -31,11 +31,16 @@ func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Reques
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
+// This will be used to send a 401 Invalid Credentials
+func (app *application) invalidCredentialResponse(w http.ResponseWriter, r *http.Request, err error) {
+	message := "invalid authentication credentials"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
 // This will be used to send a 404 Not found Status
 func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
 
 	message := "the requested resource could not be found"
-
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
 

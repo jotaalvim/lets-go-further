@@ -10,7 +10,10 @@ import (
 )
 
 // ScopeActivation holds what the token is beeing used for as we're going to reutilize the token table for other types of tokens
-const ScopeActivation = "activation"
+var (
+	ScopeActivation     = "activation"
+	ScopeAuthentication = "authentication"
+)
 
 func ValidateTokenPlainText(v *validator.Validator, tokenPlainText string) {
 	v.Check(tokenPlainText != "", "token", "must be provided")
@@ -22,11 +25,11 @@ type TokenModel struct {
 }
 
 type Token struct {
-	Plaintext string
-	Hash      []byte
-	UserID    int
-	Expiry    time.Time
-	Scope     string
+	Plaintext string    `json:"token"`
+	Hash      []byte    `json:"-"`
+	UserID    int       `json:"-"`
+	Expiry    time.Time `json:"expiry"`
+	Scope     string    `json:"-"`
 }
 
 // New generates a token and inserts into tokens database table

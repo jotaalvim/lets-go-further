@@ -29,6 +29,8 @@ func (app *application) routes() http.Handler {
 	// using PUT is more appropriete then POST because it does not change the application state
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
 
+	router.HandlerFunc(http.MethodPost, "/v1/users/authentication", app.createAuthenticationTokenHandler)
+
 	//wrap the router with panic recovery
 	return app.recoverPanic(app.rateLimit(router))
 }
