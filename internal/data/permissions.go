@@ -23,8 +23,8 @@ func (m *PermissionsModel) GetAllForUser(userID int) (Permissions, error) {
 	query := `
 	SELECT permissions.code 
 	FROM permissions
-	INER JOIN users_permission ON users_permission.permissions_id = permissions_id
-	INER JOIN users ON permissions.user_id = users.id 
+	INNER JOIN users_permissions ON users_permissions.permission_id = permissions.id
+	INNER JOIN users ON users_permissions.user_id = users.id 
 	WHERE user_id = $1
 	`
 

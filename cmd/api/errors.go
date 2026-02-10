@@ -51,6 +51,12 @@ func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r 
 }
 
 // This will be used to send a 403  Forbiden
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account doesn't have the necessary permissions to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+
+// This will be used to send a 403  Forbiden
 func (app *application) incativeAccountResponse(w http.ResponseWriter, r *http.Request) {
 	message := "you r account must be activated"
 	app.errorResponse(w, r, http.StatusForbidden, message)

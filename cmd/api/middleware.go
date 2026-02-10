@@ -14,6 +14,27 @@ import (
 	"golang.org/x/time/rate"
 )
 
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+
+		user := app.contextGetUser(r)
+
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+		if !permissions.Includes(code) {
+			app.notPermittedResponse(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+
+	return app.requireActivatedUser(fn)
+}
+
 // authenticate checks if a Authorization token is given, and places a user into the Request.Context accordingly
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
