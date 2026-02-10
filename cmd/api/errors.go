@@ -26,16 +26,46 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
+func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	// we are using an WWW-Authenticate header to remind the user to authenticate a bearer token
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "invalid or missing authentication token"
+	app.errorResponse(w, r, http.StatusBadRequest, message)
+}
+
 // This will be used to send a 400 BAD request
 func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+}
+
+// This will be used to send a 401 Invalid Credentials
+func (app *application) invalidCredentialResponse(w http.ResponseWriter, r *http.Request) {
+	message := "invalid authentication credentials"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// This will be used to send a 401 must be authenticated
+func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you mus be authenticated to acess this resource"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+// This will be used to send a 403  Forbiden
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account doesn't have the necessary permissions to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+
+// This will be used to send a 403  Forbiden
+func (app *application) incativeAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you r account must be activated"
+	app.errorResponse(w, r, http.StatusForbidden, message)
 }
 
 // This will be used to send a 404 Not found Status
 func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
 
 	message := "the requested resource could not be found"
-
 	app.errorResponse(w, r, http.StatusNotFound, message)
 }
 
@@ -46,7 +76,7 @@ func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.
 }
 
 // This will be used to send a 409 Conflict
-func (app *application) editconflitReponse(w http.ResponseWriter, r *http.Request) {
+func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
 	message := "unable to update the record dut to an edit conflit, please try again"
 	app.errorResponse(w, r, http.StatusConflict, message)
 }

@@ -30,15 +30,20 @@ type password struct {
 
 var (
 	ErrDuplicateEmail = errors.New("duplicated email")
+	AnonymousUser     = &User{}
 )
 
 type UserModel struct {
 	DB *sql.DB
 }
 
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
+
 func (m *UserModel) GetByEmail(email string) (*User, error) {
 
-	query := `SELECT id, created_at,name, email, password_hash, activated,version
+	query := `SELECT id, created_at, name, email, password_hash, activated,version
 			  FROM users
 			  WHERE email = $1`
 
@@ -51,6 +56,7 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 	err := m.DB.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.CreatedAt,
+		&user.Name,
 		&user.Email,
 		&user.Password.hash,
 		&user.Ativated,
@@ -97,7 +103,7 @@ func (m *UserModel) Update(user *User) error {
 
 	query := `UPDATE users 
 			  SET name = $1, email = $2, password_hash = $3, activated = $4, version = version + 1
-			  WHERE id = $5, version = $6
+			  WHERE id = $5 AND version = $6
 			  RETURNING version`
 
 	args := []any{

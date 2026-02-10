@@ -18,17 +18,21 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthCheck)
 
-	router.HandlerFunc(http.MethodGet, "/v1/movies", app.listMoviesHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/movies", app.createMovieHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.showMovieHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", app.updateMovieHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.deleteMovieHandler)
+	// require authetication routes
+	router.HandlerFunc(http.MethodGet, "/v1/movies", app.requirePermission("movies:read", app.listMoviesHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/movies", app.requirePermission("movies:write", app.createMovieHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/movies/:id", app.requirePermission("movies:read", app.showMovieHandler))
+	router.HandlerFunc(http.MethodPatch, "/v1/movies/:id", app.requirePermission("movies:write", app.updateMovieHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/movies/:id", app.requirePermission("movies:write", app.deleteMovieHandler))
 
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registerUserHandler)
+	// using PUT is more appropriete then POST because it does not change the application state
+	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/users/authentication", app.createAuthenticationTokenHandler)
 
 	// using PUT is more appropriete then POST because it does not change the application state
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHandler)
 
 	//wrap the router with panic recovery
-	return app.recoverPanic(app.rateLimit(router))
+	return app.recoverPanic(app.rateLimit(app.authenticate(router)))
 }
