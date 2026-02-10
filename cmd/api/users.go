@@ -55,11 +55,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+
 	err = app.models.Permissions.AddForUser(user.ID, "movies:read")
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+
 
 	token, err := app.models.Tokens.New(user.ID, 3*24*time.Hour, data.ScopeActivation)
 	if err != nil {
@@ -130,6 +132,7 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 		}
 		return
 	}
+
 
 	// if evertything went ok, delete tokens
 	err = app.models.Tokens.DeleteAllForUser(data.ScopeActivation, user.ID)

@@ -14,10 +14,12 @@ var (
 // this struct is so that in future it's easier to add new models types to the app
 
 type Models struct {
+
 	Movies      MovieModel
 	Users       UserModel
 	Tokens      TokenModel
 	Permissions PermissionsModel
+
 }
 
 func NewModels(db *sql.DB) Models {
